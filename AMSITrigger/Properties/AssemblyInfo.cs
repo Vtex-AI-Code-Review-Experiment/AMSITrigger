@@ -6,12 +6,26 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("AmsiTrigger")]
+
+
 [assembly: AssemblyDescription("")]
+
+
+
 [assembly: AssemblyConfiguration("")]
+
 [assembly: AssemblyCompany("")]
+
+
+
 [assembly: AssemblyProduct("AmsiTrigger")]
+
 [assembly: AssemblyCopyright("Copyright ©  2025")]
-[assembly: AssemblyTrademark("")]
+
+
+
+    [assembly: AssemblyTrademark("")]
+
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
