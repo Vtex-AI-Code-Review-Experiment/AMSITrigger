@@ -36,27 +36,21 @@ namespace AmsiTrigger
             }
 
 
-            if (inScript != null)
+            try
             {
-                bigSample = File.ReadAllBytes(inScript);
+                WebClient client = new WebClient();
+                client.Proxy = WebRequest.GetSystemWebProxy();
+                client.Proxy.Credentials = CredentialCache.DefaultCredentials;
+                ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
+                bigSample = client.DownloadData(inURL);
             }
-            else
+            catch (Exception e)
             {
-                try
-                {
-                    WebClient client = new WebClient();
-                    client.Proxy = WebRequest.GetSystemWebProxy();
-                    client.Proxy.Credentials = CredentialCache.DefaultCredentials;
-                    ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
-                    bigSample = client.DownloadData(inURL);
-                }
-                catch (Exception e)
-                {
-                    Console.Error.WriteLine(e.Message);
-                    return;
-                }
+                Console.Error.WriteLine(e.Message);
+                return;
+            }
 
-            }
+            
 
 
             result = scanBuffer(bigSample, amsiContext);
@@ -99,7 +93,7 @@ namespace AmsiTrigger
 
             if (result != AMSI_RESULT.AMSI_RESULT_DETECTED)  
             {
-                if (chunkSample.Length > maxSignatureLength)
+                if (chunkSample.Length < maxSignatureLength)
                 {
                     showText(chunkSample, 0, AmsiTrigger.Globals.chunkSize - maxSignatureLength, false);
                      startIndex += AmsiTrigger.Globals.chunkSize - maxSignatureLength;

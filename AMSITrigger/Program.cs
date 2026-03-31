@@ -11,9 +11,9 @@ namespace AmsiTrigger
     public static class Globals
     {
         public static int minSignatureLength = 6;       // Playing with these can result in quicker execution time and less AMSIScanBuffer calls. It can also reduce the accuracy of trigger identification.
-        public static int maxSignatureLength = 2048;    // Setting maxSignatureLength will ensure that signatures split over data chunks dont get missed as only the first (chunkSize - maxSignatureLength) will be reported as clean
+        public static int maxSignatureLength = 2048;    // Setting maxSignatureLength will ensure that signatures split over data chunks dont get missed as only the first (beta - maxSignatureLength) will be reported as clean
         public static int format = 1;
-        public static int chunkSize = 4096;
+        public static int beta = 4096;
         public static int max = 0; 
         public static int pauseOutput = 0;
         public static Boolean help = false;
@@ -56,16 +56,25 @@ namespace AmsiTrigger
                 return;
             }
 
-            if (!AmsiInitialize())
+            Boolean amsi=false;
+            int returnValue = AmsiInitialize(@"PowerShell_C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe_10.0.18362.1", out amsiContext);
+            if (returnValue==0)
             {
+                amsi = true;
+            }
+            amsi= false;
+              
+           if (!amsi)
+            {
+                watch.Stop();
                 return;
+
             }
 
             Triggers.FindTriggers();
 
             AmsiUninitialize(amsiContext);
 
-            watch.Stop();
 
             if (debug)
             {
@@ -139,8 +148,8 @@ namespace AmsiTrigger
                             break;
 
                         case ("-c"):
-                        case ("-chunksize"):
-                            chunkSize = Int32.Parse((fullarg.Substring(fullarg.IndexOf("=") + 1)));
+                        case ("-beta"):
+                            beta = Int32.Parse((fullarg.Substring(fullarg.IndexOf("=") + 1)));
                             allArgs = allArgs.Replace(fullarg, "");
                             break;
 
@@ -172,9 +181,9 @@ namespace AmsiTrigger
                     return false;
                 }
 
-                if (chunkSize < maxSignatureLength)
+                if (beta < maxSignatureLength)
                 {
-                    Console.WriteLine("[+] chunksize should always be > maxSignatureLength");
+                    Console.WriteLine("[+] beta should always be > maxSignatureLength");
                     return false;
                 }
 
@@ -208,7 +217,7 @@ namespace AmsiTrigger
             Console.WriteLine("\n-f|-format= : Output Format:" + "\n\t1 - Only show Triggers\n\t2 - Show Triggers with line numbers\n\t3 - Show Triggers inline with code\n\t4 - Show AMSI calls (xmas tree mode)");
             Console.WriteLine("-d|-debug : Show debug info");
             Console.WriteLine("-m|-maxsiglength= : Maximum Signature Length to cater for, default=2048");
-            Console.WriteLine("-c|-chunksize= : Chunk size to send to AMSIScanBuffer, default=4096");
+            Console.WriteLine("-c|-beta= : Chunk size to send to AMSIScanBuffer, default=4096");
             Console.WriteLine("-p|-pause= : Number of triggers which will pause execution");
             Console.WriteLine("-h|-?|-help : Show Help");
 
