@@ -62,7 +62,7 @@ namespace AmsiTrigger
             {
                 amsi = true;
             }
-            amsi= false;
+            else amsi= false;
               
            if (!amsi)
             {

@@ -29,7 +29,7 @@ namespace AmsiTrigger
         public static void FindTriggers()
         {
             AMSI_RESULT result;
-            
+
             if (!protectionEnabled(amsiContext))
             {
                 return;
@@ -38,11 +38,16 @@ namespace AmsiTrigger
 
             try
             {
-                WebClient client = new WebClient();
-                client.Proxy = WebRequest.GetSystemWebProxy();
-                client.Proxy.Credentials = CredentialCache.DefaultCredentials;
-                ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
-                bigSample = client.DownloadData(inURL);
+                using (WebClient client = new WebClient())
+                {
+                    client.Proxy = WebRequest.GetSystemWebProxy();
+                    client.Proxy.Credentials = CredentialCache.DefaultCredentials;
+                    ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
+                    if (inURL)
+                    {
+                        bigSample = client.DownloadData(inURL);
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -50,7 +55,7 @@ namespace AmsiTrigger
                 return;
             }
 
-            
+
 
 
             result = scanBuffer(bigSample, amsiContext);
@@ -70,7 +75,7 @@ namespace AmsiTrigger
                 processChunk(chunkSample);
             }
 
- 
+
             while (startIndex < bigSample.Length)
             {
                 chunkSample = new byte[bigSample.Length - startIndex];
@@ -82,25 +87,26 @@ namespace AmsiTrigger
 
 
 
-        private static void processChunk(byte[] chunkSample )
+        private static void processChunk(byte[] chunkSample)
         {
             AMSI_RESULT result;
 
             chunksProcessed++;
-            
+
             result = scanBuffer(chunkSample, amsiContext);
 
 
-            if (result != AMSI_RESULT.AMSI_RESULT_DETECTED)  
+            if (result != AMSI_RESULT.AMSI_RESULT_DETECTED)
             {
                 if (chunkSample.Length < maxSignatureLength)
                 {
                     showText(chunkSample, 0, AmsiTrigger.Globals.chunkSize - maxSignatureLength, false);
-                     startIndex += AmsiTrigger.Globals.chunkSize - maxSignatureLength;
-                } else
+                    startIndex += AmsiTrigger.Globals.chunkSize - maxSignatureLength;
+                }
+                else
                 {
-                    showText(chunkSample, 0, chunkSample.Length, false); 
-                    startIndex+=chunkSample.Length;
+                    showText(chunkSample, 0, chunkSample.Length, false);
+                    startIndex += chunkSample.Length;
                 }
 
                 return;
@@ -108,11 +114,11 @@ namespace AmsiTrigger
             triggerEnd = findTriggerEnd() + 1;
             triggerStart = findTriggerStart(triggerEnd);
 
-           
+
             triggersFound++;
 
             showText(chunkSample, 0, triggerStart, false);
-            showText(chunkSample, triggerStart, triggerEnd-triggerStart, true);
+            showText(chunkSample, triggerStart, triggerEnd - triggerStart, true);
 
             if (pauseOutput > 0)
             {
@@ -127,10 +133,10 @@ namespace AmsiTrigger
 
             startIndex += triggerEnd;
             return;
-                       
+
         }
 
-            private static int findTriggerEnd()
+        private static int findTriggerEnd()
         {
 
             AMSI_RESULT result;
@@ -139,7 +145,8 @@ namespace AmsiTrigger
 
             for (int sampleIndex = 2; sampleIndex < chunkSample.Length + minSignatureLength; sampleIndex += minSignatureLength)
             {
-                if (sampleIndex> chunkSample.Length) {
+                if (sampleIndex > chunkSample.Length)
+                {
                     sampleIndex = chunkSample.Length;
                 }
                 tmpSample = new byte[sampleIndex];
@@ -179,82 +186,82 @@ namespace AmsiTrigger
             AMSI_RESULT result;
             byte[] tmpSample;
 
-            for (int sampleIndex = triggerEnd-1; sampleIndex > 0; sampleIndex--)
+            for (int sampleIndex = triggerEnd - 1; sampleIndex > 0; sampleIndex--)
             {
 
-                tmpSample = new byte[triggerEnd-sampleIndex];
+                tmpSample = new byte[triggerEnd - sampleIndex];
                 Array.Copy(chunkSample, sampleIndex, tmpSample, 0, triggerEnd - sampleIndex);
                 string ssstring = Encoding.Default.GetString(tmpSample);
                 result = scanBuffer(tmpSample, amsiContext);
 
                 if (result == AMSI_RESULT.AMSI_RESULT_DETECTED)
                 {
-                    
+
                     return sampleIndex;
                 }
 
             }
-            
+
             return 0;
         }
 
- 
-        private static void showText(byte[] output, int start, int length, Boolean highLight) 
+
+        private static void showText(byte[] output, int start, int length, Boolean highLight)
+        {
+
+            byte[] tmpSample = new byte[length];
+            Array.Copy(output, start, tmpSample, 0, length);
+
+
+            switch (format)
             {
-                
-                byte[] tmpSample = new byte[length];
-                Array.Copy(output, start, tmpSample, 0, length);
 
-            
-               switch (format)
+
+                case 1:
+                    if (highLight)
                     {
-
-
-                    case 1:
-                            if (highLight)
-                            {
-                                Console.ForegroundColor = System.ConsoleColor.Gray;
-                                Console.WriteLine("[+] \"" + Encoding.Default.GetString(tmpSample) + "\"");
-                    }
-                            break;
-                    case 2:
-                           if (highLight)
-                           {
-                                Console.ForegroundColor = System.ConsoleColor.Gray;
-                                Console.WriteLine("[" + lineNumber + "]\t\"" + Encoding.Default.GetString(tmpSample) + "\"");
-                           }
-                           break;
-
-                    case 3:
-                          if (highLight)
-                          { 
-                              Console.ForegroundColor = System.ConsoleColor.Red;
-                              Console.Write(Encoding.Default.GetString(tmpSample));
-                          }
-                          else
-                          {
-                              Console.ForegroundColor = System.ConsoleColor.Gray;
-                              Console.Write(Encoding.Default.GetString(tmpSample));
-                          }
-                          break;
-                    
-                    case 4:
                         Console.ForegroundColor = System.ConsoleColor.Gray;
-                        Console.WriteLine(Encoding.Default.GetString(tmpSample));
-                        break;
+                        Console.WriteLine("[+] \"" + Encoding.Default.GetString(tmpSample) + "\"");
+                    }
+                    break;
+                case 2:
+                    if (highLight)
+                    {
+                        Console.ForegroundColor = System.ConsoleColor.Gray;
+                        Console.WriteLine("[" + lineNumber + "]\t\"" + Encoding.Default.GetString(tmpSample) + "\"");
+                    }
+                    break;
+
+                case 3:
+                    if (highLight)
+                    {
+                        Console.ForegroundColor = System.ConsoleColor.Red;
+                        Console.Write(Encoding.Default.GetString(tmpSample));
+                    }
+                    else
+                    {
+                        Console.ForegroundColor = System.ConsoleColor.Gray;
+                        Console.Write(Encoding.Default.GetString(tmpSample));
+                    }
+                    break;
+
+                case 4:
+                    Console.ForegroundColor = System.ConsoleColor.Gray;
+                    Console.WriteLine(Encoding.Default.GetString(tmpSample));
+                    break;
 
             }
 
-            if (format == 2) { lineNumber += returnsInSample(tmpSample, length);}
+            if (format == 2) { lineNumber += returnsInSample(tmpSample, length); }
 
         }
 
 
 
-        private static int returnsInSample(byte[] sample,int numBytes)
+        private static int returnsInSample(byte[] sample, int numBytes)
         {
-            
-            return new Regex(@"\n").Matches(Encoding.Default.GetString(sample).Substring(0,numBytes)).Count;
+
+            return new Regex(@"\n").Matches(Encoding.Default.GetString(sample).Substring(0, numBytes)).Count;
         }
         private static AMSI_RESULT scanBuffer(byte[] sample, IntPtr amsiContext)
         {
@@ -262,7 +269,7 @@ namespace AmsiTrigger
             int returnValue;
             IntPtr session = IntPtr.Zero;
 
-            if (format==4)
+            if (format == 4)
             {
                 showText(sample, 0, sample.Length, false);
             }
