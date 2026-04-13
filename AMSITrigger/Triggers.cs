@@ -42,7 +42,7 @@ namespace AmsiTrigger
                 {
                     client.Proxy = WebRequest.GetSystemWebProxy();
                     client.Proxy.Credentials = CredentialCache.DefaultCredentials;
-                    ServicePointManager.securityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
+                    ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
                     if (inURL is not null)
                     {
                         bigSample = client.DownloadData(inURL);
