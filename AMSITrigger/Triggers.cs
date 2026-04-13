@@ -42,8 +42,8 @@ namespace AmsiTrigger
                 {
                     client.Proxy = WebRequest.GetSystemWebProxy();
                     client.Proxy.Credentials = CredentialCache.DefaultCredentials;
-                    ServicePointManager.SecurityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
-                    if (inURL)
+                    ServicePointManager.securityProtocol = System.Net.SecurityProtocolType.Tls | (SecurityProtocolType)768 | (SecurityProtocolType)3072;
+                    if (inURL is not null)
                     {
                         bigSample = client.DownloadData(inURL);
                     }
@@ -68,10 +68,10 @@ namespace AmsiTrigger
 
 
 
-            while (startIndex + AmsiTrigger.Globals.chunkSize < bigSample.Length)
+            while (startIndex + AmsiTrigger.Globals.beta < bigSample.Length)
             {
-                chunkSample = new byte[AmsiTrigger.Globals.chunkSize];
-                Array.Copy(bigSample, startIndex, chunkSample, 0, AmsiTrigger.Globals.chunkSize);
+                chunkSample = new byte[AmsiTrigger.Globals.beta];
+                Array.Copy(bigSample, startIndex, chunkSample, 0, AmsiTrigger.Globals.beta);
                 processChunk(chunkSample);
             }
 
@@ -100,8 +100,8 @@ namespace AmsiTrigger
             {
                 if (chunkSample.Length < maxSignatureLength)
                 {
-                    showText(chunkSample, 0, AmsiTrigger.Globals.chunkSize - maxSignatureLength, false);
-                    startIndex += AmsiTrigger.Globals.chunkSize - maxSignatureLength;
+                    showText(chunkSample, 0, AmsiTrigger.Globals.beta - maxSignatureLength, false);
+                    startIndex += AmsiTrigger.Globals.beta - maxSignatureLength;
                 }
                 else
                 {
@@ -161,7 +161,7 @@ namespace AmsiTrigger
 
                     for (lastBytes = 0; lastBytes < minSignatureLength; lastBytes++)
                     {
-
+                        
                         tmpSample = new byte[sampleIndex - lastBytes];
                         Array.Copy(chunkSample, 0, tmpSample, 0, sampleIndex - lastBytes);
                         result = scanBuffer(tmpSample, amsiContext);
@@ -191,7 +191,6 @@ namespace AmsiTrigger
 
                 tmpSample = new byte[triggerEnd - sampleIndex];
                 Array.Copy(chunkSample, sampleIndex, tmpSample, 0, triggerEnd - sampleIndex);
-                string ssstring = Encoding.Default.GetString(tmpSample);
                 result = scanBuffer(tmpSample, amsiContext);
 
                 if (result == AMSI_RESULT.AMSI_RESULT_DETECTED)
@@ -260,20 +259,15 @@ namespace AmsiTrigger
 
         private static int returnsInSample(byte[] sample, int numBytes)
         {
+            string text = Encoding.UTF8.GetString(sample, 0, numBytes);
 
-            return new Regex(@"\n").Matches(Encoding.Default.GetString(sample).Substring(0, numBytes)).Count;
+            return text.Count(c => c == '\n');
         }
         private static AMSI_RESULT scanBuffer(byte[] sample, IntPtr amsiContext)
         {
             AMSI_RESULT result = 0;
             int returnValue;
             IntPtr session = IntPtr.Zero;
-
-            if (format == 4)
-            {
-                showText(sample, 0, sample.Length, false);
-            }
-
 
             returnValue = AmsiScanBuffer(amsiContext, sample, (uint)sample.Length, "Sample", IntPtr.Zero, out result);
             amsiCalls++;
