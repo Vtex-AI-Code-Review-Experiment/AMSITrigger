@@ -14,7 +14,6 @@ namespace AmsiTrigger
         public static int maxSignatureLength = 2048;    // Setting maxSignatureLength will ensure that signatures split over data chunks dont get missed as only the first (beta - maxSignatureLength) will be reported as clean
         public static int format = 1;
         public static int beta = 4096;
-        public static int max = 0; 
         public static int pauseOutput = 0;
         public static Boolean help = false;
         public static Boolean debug = false;
@@ -62,7 +61,7 @@ namespace AmsiTrigger
             {
                 amsi = true;
             }
-            amsi= false;
+            else amsi= false;
               
            if (!amsi)
             {
@@ -83,6 +82,7 @@ namespace AmsiTrigger
                 Console.WriteLine($"Triggers Found: {triggersFound}");
                 Console.WriteLine($"AmsiScanBuffer Calls: {amsiCalls}");
                 Console.WriteLine($"Total Execution Time: {watch.Elapsed.TotalSeconds} s");
+                Console.ResetColor();
             }
 
         }
@@ -153,11 +153,6 @@ namespace AmsiTrigger
                             allArgs = allArgs.Replace(fullarg, "");
                             break;
 
-                        case ("-h"):
-                        case ("-help"):
-                            showHelp();
-                            break;
-
                         default:
                             showHelp();
                             break;
@@ -177,20 +172,20 @@ namespace AmsiTrigger
                 }
                 if (inURL != null && inURL.ToLower().Substring(0, 7) != "http://" && inURL.ToLower().Substring(0, 8) != "https://")
                 {
-                    Console.WriteLine("[+] Invalid URL - must begin with http:// or https://");
+                    Console.WriteLine("[-] Invalid URL - must begin with http:// or https://");
                     return false;
                 }
 
                 if (beta < maxSignatureLength)
                 {
-                    Console.WriteLine("[+] beta should always be > maxSignatureLength");
+                    Console.WriteLine("[-] beta should always be > maxSignatureLength");
                     return false;
                 }
 
 
                 if (inScript != null && !File.Exists(inScript))
                 {
-                    Console.WriteLine("[+] File not found");
+                    Console.WriteLine("[-] File not found");
                     return false;
                 }
             
